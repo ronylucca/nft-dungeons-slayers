@@ -3,6 +3,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import './App.css';
+import SelectCharacter from './Components/SelectCharacter';
 import twitterLogo from './assets/twitter-logo.svg';
 
 // Constants
@@ -15,6 +16,7 @@ const App = () => {
    */
   const [currentAccount, setCurrentAccount] = useState(null);
 
+  const [characterNFT, setCharacterNFT] = useState(null);
   /*
    * Since this method will take some time, make sure to declare it as async
    */
@@ -48,8 +50,38 @@ const App = () => {
       console.log(error);
     }
   };
-/*
-   * Implement your connectWallet method here
+
+  //Render Methods
+  const renderContent = () => {
+    /**
+     * Scenario 1
+     */
+    if(!currentAccount){
+      return(
+        <div className="connect-wallet-container">
+          <img
+              src="https://c.tenor.com/O6Yh4R9EQG4AAAAC/dungeons-dragons-dnd.gif"
+              alt="Monty Python Gif"
+            />
+        <button
+          className="cta-button connect-wallet-button"
+          onClick={connectWalletAction}
+        >
+           Connect Wallet To Get Started
+        </button>
+      </div>
+      );
+    /*
+     * Scenario #2
+     */
+    }else if (currentAccount && !characterNFT) {
+      return <SelectCharacter setCharacterNFT={setCharacterNFT} />;
+    } 
+
+  };
+
+  /*
+   * Implement connectWallet method
    */
   const connectWalletAction = async () => {
     try {
@@ -68,7 +100,7 @@ const App = () => {
       });
 
       /*
-       * Boom! This should print out public address once we authorize Metamask.
+       * This should print out public address once we authorize Metamask.
        */
       console.log('Connected', accounts[0]);
       setCurrentAccount(accounts[0]);
@@ -86,24 +118,12 @@ const App = () => {
       <div className="container">
         <div className="header-container">
           <p className="header gradient-text">⚔️ Dungeons Slayer ⚔️</p>
-          <p className="sub-text">Team up to protect the Metaverse!</p>
-          <div className="connect-wallet-container">
-            <img
-              src="https://c.tenor.com/O6Yh4R9EQG4AAAAC/dungeons-dragons-dnd.gif"
-              alt="Monty Python Gif"
-            />
-            
+          <p className="sub-text">Team up to protect the Metaverse!</p>     
             {/*
              * Button that we will use to trigger wallet connect
              * Don't forget to add the onClick event to call your method!
              */}
-            <button
-              className="cta-button connect-wallet-button"
-              onClick={connectWalletAction}
-            >
-              {currentAccount?currentAccount:`Connect Wallet To Get Started`} 
-            </button>
-          </div>
+            {renderContent()}
         </div>
         <div className="footer-container">
           <img alt="Twitter Logo" className="twitter-logo" src={twitterLogo} />
