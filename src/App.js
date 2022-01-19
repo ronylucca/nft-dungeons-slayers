@@ -123,8 +123,8 @@ const App = () => {
   };
 
   useEffect(() => {
-    checkIfWalletIsConnected();
-    checkNetwork();
+     checkIfWalletIsConnected();
+     checkNetwork();
   }, []);
 
   //Contract interations UseEffect
