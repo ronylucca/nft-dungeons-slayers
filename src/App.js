@@ -89,7 +89,10 @@ const App = () => {
      */
     }else if (currentAccount && !characterNFT) {
       return <SelectCharacter setCharacterNFT={setCharacterNFT} />;
-    } 
+    } else{
+      return <SelectCharacter setCharacterNFT={characterNFT} />
+
+    }
 
   };
 

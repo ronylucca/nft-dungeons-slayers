@@ -19,14 +19,30 @@ const renderCharacters = () =>
       <div className="name-container">
         <p>{character.name}</p>
       </div>
-      <img src={character.imageURI} alt={character.name} />
+      <img src={character.imageURI} alt={character.name}/>
       <button
         type="button"
         className="character-mint-button"
-        //onClick={mintCharacterNFTAction(index)}
+        onClick={mintCharacterNFTAction(index)}
       >{`Mint ${character.name}`}</button>
     </div>
   ));
+
+
+    // Actions
+    const mintCharacterNFTAction = (characterId) => async () => {
+        try {
+        if (gameContract) {
+            console.log('Minting character in progress...');
+            const mintTxn = await gameContract.mintCharacterNFT(characterId);
+            await mintTxn.wait();
+            console.log('mintTxn:', mintTxn);
+        }
+        } catch (error) {
+        console.warn('MintCharacterAction Error:', error);
+        }
+    };
+
 
 // UseEffect
 useEffect(() => {
@@ -79,17 +95,48 @@ useEffect(() => {
     };
   
     /*
-     * If our gameContract is ready, let's get characters!
+   * Add a callback method that will fire when this event is received
+   */
+  const onCharacterMint = async (sender, tokenId, characterIndex) => {
+    console.log(
+      `CharacterNFTMinted - sender: ${sender} tokenId: ${tokenId.toNumber()} characterIndex: ${characterIndex.toNumber()}`
+    );
+    alert(`Your NFT is all done -- see it here: https://testnets.opensea.io/assets/${CONTRACT_ADDRESS}/${tokenId.toNumber()}`)
+
+    /*
+     * Once our character NFT is minted we can fetch the metadata from our contract
+     * and set it in state to move onto the Arena
      */
     if (gameContract) {
-      getCharacters();
+      const characterNFT = await gameContract.checkIfUserHasNFT();
+      console.log('CharacterNFT: ', characterNFT);
+      setCharacterNFT(transformCharacterData(characterNFT));
     }
-  }, [gameContract]);
+  };
+
+  if (gameContract) {
+    getCharacters();
+
+    /*
+     * Setup NFT Minted Listener
+     */
+    gameContract.on('CharacterNFTMinted', onCharacterMint);
+  }
+
+  return () => {
+    /*
+     * When your component unmounts, let;s make sure to clean up this listener
+     */
+    if (gameContract) {
+      gameContract.off('CharacterNFTMinted', onCharacterMint);
+    }
+  };
+}, [gameContract]);
 
 
     return (
         <div className="select-character-container">
-            <h2>Mint Your Hero. Chosse wisely.</h2>
+            <h2>Mint Your Hero. Chosse wisely.</h2><br></br>
             {/* Only show this when there are characters in state */}
             {characters.length > 0 && (
                 <div className="character-grid">{renderCharacters()}</div>
