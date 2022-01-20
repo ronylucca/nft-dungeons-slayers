@@ -131,7 +131,7 @@ useEffect(() => {
       gameContract.off('CharacterNFTMinted', onCharacterMint);
     }
   };
-}, [gameContract]);
+}, [gameContract, setCharacterNFT]);
 
 
     return (
