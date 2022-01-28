@@ -9,10 +9,13 @@ import LoadingIndicator from "../LoadingIndicator";
 const Arena = ({ characterNFT, setCharacterNFT }) => {
   //state
   const [gameContract, setGameContract] = useState(null);
+
   //state to hold our boss data
   const [boss, setBoss] = useState(null);
 
   const [attackState, setAttackState] = useState("");
+
+  const [showToast, setShowToast] = useState(false);
 
   //useEffects
   useEffect(() => {
@@ -44,8 +47,6 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
         const bossHp = newBossHp.toNumber();
         const playerHp = newPlayerHp.toNumber();
 
-        alert(`AttackComplete: Boss Hp: ${bossHp} Player Hp: ${playerHp}`);
-
         /*
         * Update both player and boss Hp
         */
@@ -75,12 +76,18 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
   const runAttackAction = async () => {
     try {
       if (gameContract) {
+
           setAttackState('attacking');
           console.log('Attacking Boss...');
           const attackTxn = await gameContract.attackBoss();
           await attackTxn.wait();
           console.log('attackTxn', attackTxn);
           setAttackState('Hit');
+
+          setShowToast(true);
+          setTimeout(() => {
+            setShowToast(false);
+          }, 5000);
       }
     } catch (error) {
         console.error('Error attacking boss: ',error);
@@ -90,10 +97,18 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
 
   return (
     <div className="arena-container">
+      {/* Add your toast HTML right here */}
+      {boss && characterNFT && (
+        <div id="toast" className={showToast ? 'show' : ''}>
+          <div id="desc">{`💥 ${boss.name} was hit for ${characterNFT.attackDamage}!`}</div>
+        </div>
+      )}
+  
+      {/* Boss */}
       {boss && (
         <div className="boss-container">
-          <div className={`boss-content ${attackState}`}>
-            <h2>🔥{boss.name}🔥</h2>
+          <div className={`boss-content  ${attackState}`}>
+            <h2>🔥 {boss.name} 🔥</h2>
             <div className="image-content">
               <img src={boss.imageURI} alt={`Boss ${boss.name}`} />
               <div className="health-bar">
@@ -101,24 +116,22 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
                 <p>{`${boss.hp} / ${boss.maxHp} HP`}</p>
               </div>
             </div>
-            <div className="stats">
-              <h4>{`⚔️ Attack Damage: ${boss.attackDamage}`}</h4>
-            </div>
           </div>
           <div className="attack-container">
-            <button className="cla-button" onClick={runAttackAction}>
-              {`💥 Attacl ${boss.name}`}
+            <button className="cta-button" onClick={runAttackAction}>
+              {`💥 Attack ${boss.name}`}
             </button>
           </div>
-          
           {attackState === 'attacking' && (
-          <div className="loading-indicator">
-            <LoadingIndicator />
-            <p>Attacking ⚔️</p>
-          </div>
+            <div className="loading-indicator">
+              <LoadingIndicator />
+              <p>Attacking ⚔️</p>
+            </div>
           )}
         </div>
       )}
+  
+      {/* Character NFT */}
       {characterNFT && (
         <div className="players-container">
           <div className="player-container">
@@ -140,6 +153,10 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
               </div>
             </div>
           </div>
+          {/* <div className="active-players">
+            <h2>Active Players</h2>
+            <div className="players-list">{renderActivePlayersList()}</div>
+          </div> */}
         </div>
       )}
     </div>
