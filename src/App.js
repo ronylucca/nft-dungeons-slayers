@@ -9,6 +9,7 @@ import { CONTRACT_ADDRESS, transformCharacterData } from "./constants";
 import myEpicGame from "./utils/MyEpicGame.json";
 import { ethers } from "ethers";
 import Arena from "./Components/Arena";
+import LoadingIndicator from './Components/LoadingIndicator';
 
 // Constants
 const TWITTER_HANDLE = "_dungeonslayer";
@@ -21,6 +22,8 @@ const App = () => {
   const [currentAccount, setCurrentAccount] = useState(null);
 
   const [characterNFT, setCharacterNFT] = useState(null);
+
+  const [isLoading, setIsLoading] = useState(false);
   /*
    * Since this method will take some time, make sure to declare it as async
    */
@@ -29,9 +32,13 @@ const App = () => {
       const { ethereum } = window;
 
       if (!ethereum) {
+
         console.log("Make sure you have MetaMask!");
+        setIsLoading(false);
         return;
+
       } else {
+
         console.log("We have the ethereum object", ethereum);
 
         /*
@@ -53,6 +60,8 @@ const App = () => {
     } catch (error) {
       console.log(error);
     }
+
+    setIsLoading(false);
   };
 
   const checkNetwork = async () => {
@@ -70,6 +79,11 @@ const App = () => {
 
   //Render Methods
   const renderContent = () => {
+    
+    if (isLoading) {
+      return <LoadingIndicator />;
+    }
+    
     /**
      * Scenario 1
      */
@@ -141,6 +155,7 @@ const App = () => {
   };
 
   useEffect(() => {
+    setIsLoading(true);
     checkIfWalletIsConnected();
     checkNetwork();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -169,6 +184,8 @@ const App = () => {
       } else {
         console.log("No character NFT found");
       }
+
+      setIsLoading(false);
     };
 
     /*
