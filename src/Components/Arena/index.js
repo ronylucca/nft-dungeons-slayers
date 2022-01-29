@@ -9,12 +9,10 @@ import LoadingIndicator from "../LoadingIndicator";
 const Arena = ({ characterNFT, setCharacterNFT }) => {
   //state
   const [gameContract, setGameContract] = useState(null);
-
   //state to hold our boss data
   const [boss, setBoss] = useState(null);
-
   const [attackState, setAttackState] = useState("");
-
+  const [reviveBossState, setReviveBossState] = useState("");
   const [showToast, setShowToast] = useState(false);
 
   //useEffects
@@ -44,73 +42,121 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
     };
 
     const onAttackComplete = (newBossHp, newPlayerHp) => {
-        const bossHp = newBossHp.toNumber();
-        const playerHp = newPlayerHp.toNumber();
+      const bossHp = newBossHp.toNumber();
+      const playerHp = newPlayerHp.toNumber();
 
-        /*
-        * Update both player and boss Hp
-        */
-        setBoss((prevState) => {
-            return { ...prevState, hp: bossHp };
-        });
+      /*
+       * Update both player and boss Hp
+       */
+      setBoss((prevState) => {
+        return { ...prevState, hp: bossHp };
+      });
 
-        setCharacterNFT((prevState) => {
-            return { ...prevState, hp: playerHp };
-        });
+      setCharacterNFT((prevState) => {
+        return { ...prevState, hp: playerHp };
+      });
+    };
+
+    const onReviveBossComplete = (newBossHp) => {
+      const bossHp = newBossHp.toNumber();
+
+      /*
+       * Update both player and boss Hp
+       */
+      setBoss((prevState) => {
+        return { ...prevState, hp: bossHp };
+      });
+      setReviveBossState('complete');
+
+      // setCharacterNFT((prevState) => {
+      //   return { ...prevState };
+      // });
     };
 
     if (gameContract) {
       fetchBoss();
-      gameContract.on('AttackComplete', onAttackComplete);
+      gameContract.on("AttackComplete", onAttackComplete);
+      gameContract.on("ReviveBossComplete", onReviveBossComplete);
+      
     }
 
     return () => {
-        if (gameContract) {
-            gameContract.off('AttackComplete', onAttackComplete);
-        }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+      if (gameContract) {
+        gameContract.off("AttackComplete", onAttackComplete);
+        gameContract.off("ReviveBossComplete", onReviveBossComplete);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameContract]);
 
   // Actions
+
+  const reviveBossAction = async () => {
+    try {
+      if (gameContract) {
+        setReviveBossState("reviving");
+        console.log("Ressurecting Boss...");
+        const reviveTxn = await gameContract.reviveBoss();
+        await reviveTxn.wait();
+        console.log("reviveTxn", reviveTxn);
+        setReviveBossState("revived");
+
+        setShowToast(true);
+        setTimeout(() => {
+          setShowToast(false);
+        }, 5000);
+      }
+    } catch (error) {
+      console.error("Error attacking boss: ", error);
+      setReviveBossState("");
+    }
+  };
+
   const runAttackAction = async () => {
     try {
       if (gameContract) {
+        setAttackState("attacking");
+        console.log("Attacking Boss...");
+        const attackTxn = await gameContract.attackBoss();
+        await attackTxn.wait();
+        console.log("attackTxn", attackTxn);
+        setAttackState("Hit");
 
-          setAttackState('attacking');
-          console.log('Attacking Boss...');
-          const attackTxn = await gameContract.attackBoss();
-          await attackTxn.wait();
-          console.log('attackTxn', attackTxn);
-          setAttackState('Hit');
-
-          setShowToast(true);
-          setTimeout(() => {
-            setShowToast(false);
-          }, 5000);
+        setShowToast(true);
+        setTimeout(() => {
+          setShowToast(false);
+        }, 5000);
       }
     } catch (error) {
-        console.error('Error attacking boss: ',error);
-        setAttackState('');
+      console.error("Error attacking boss: ", error);
+      setAttackState("");
     }
   };
 
   return (
     <div className="arena-container">
       {/* Add your toast HTML right here */}
-      {boss && characterNFT && (
-        <div id="toast" className={showToast ? 'show' : ''}>
+      {reviveBossState === "complete" && (
+        <div id="toast" className={showToast ? "show" : ""}>
+          <div id="desc">{`💥 ${boss.name} was ressurected successfully!`}</div>
+        </div>
+      )}
+      {boss && characterNFT && attackState === "Hit" && (
+        <div id="toast" className={showToast ? "show" : ""}>
           <div id="desc">{`💥 ${boss.name} was hit for ${characterNFT.attackDamage}!`}</div>
         </div>
       )}
-  
+
       {/* Boss */}
       {boss && (
         <div className="boss-container">
           <div className={`boss-content  ${attackState}`}>
             <h2>🔥 {boss.name} 🔥</h2>
             <div className="image-content">
-              <img src={boss.imageURI} alt={`Boss ${boss.name}`} />
+              <img
+                src={`https://cloudflare-ipfs.com/ipfs/${boss.imageURI}`}
+                alt={`Boss ${boss.name}`}
+              />
               <div className="health-bar">
                 <progress value={boss.hp} max={boss.maxHp} />
                 <p>{`${boss.hp} / ${boss.maxHp} HP`}</p>
@@ -118,19 +164,30 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
             </div>
           </div>
           <div className="attack-container">
+          {boss.hp === 0 && (
+            <button className="cta-button" onClick={reviveBossAction}>
+              {`💉 Ressurect`}
+            </button>
+            )}
             <button className="cta-button" onClick={runAttackAction}>
               {`💥 Attack ${boss.name}`}
             </button>
           </div>
-          {attackState === 'attacking' && (
+          {attackState === "attacking" && (
             <div className="loading-indicator">
               <LoadingIndicator />
               <p>Attacking ⚔️</p>
             </div>
           )}
+          {reviveBossState === "reviving" && (
+            <div className="loading-indicator">
+              <LoadingIndicator />
+              <p>Reviving 💉</p>
+            </div>
+          )}
         </div>
       )}
-  
+
       {/* Character NFT */}
       {characterNFT && (
         <div className="players-container">
@@ -140,7 +197,7 @@ const Arena = ({ characterNFT, setCharacterNFT }) => {
               <div className="image-content">
                 <h2>{characterNFT.name}</h2>
                 <img
-                  src={characterNFT.imageURI}
+                  src={`https://cloudflare-ipfs.com/ipfs/${characterNFT.imageURI}`}
                   alt={`Character ${characterNFT.name}`}
                 />
                 <div className="health-bar">

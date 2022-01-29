@@ -20,7 +20,7 @@ const SelectCharacter = ({ setCharacterNFT }) => {
         <div className="name-container">
           <p>{character.name}</p>
         </div>
-        <img src={character.imageURI} alt={character.name} />
+        <img src={`https://cloudflare-ipfs.com/ipfs/${character.imageURI}`} alt={character.name} />
         <button
           type="button"
           className="character-mint-button"
@@ -102,10 +102,6 @@ const SelectCharacter = ({ setCharacterNFT }) => {
       console.log(
         `CharacterNFTMinted - sender: ${sender} tokenId: ${tokenId.toNumber()} characterIndex: ${characterIndex.toNumber()}`
       );
-      alert(
-        `Your NFT is all done -- see it here: https://testnets.opensea.io/assets/${CONTRACT_ADDRESS}/${tokenId.toNumber()}`
-      );
-
       /*
        * Once our character NFT is minted we can fetch the metadata from our contract
        * and set it in state to move onto the Arena
