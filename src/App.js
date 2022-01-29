@@ -9,7 +9,7 @@ import { CONTRACT_ADDRESS, transformCharacterData } from "./constants";
 import myEpicGame from "./utils/MyEpicGame.json";
 import { ethers } from "ethers";
 import Arena from "./Components/Arena";
-import LoadingIndicator from './Components/LoadingIndicator';
+import LoadingIndicator from "./Components/LoadingIndicator";
 
 // Constants
 const TWITTER_HANDLE = "_dungeonslayer";
@@ -24,6 +24,8 @@ const App = () => {
   const [characterNFT, setCharacterNFT] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const [networkStatus, setNetworkStatus] = useState(false);
   /*
    * Since this method will take some time, make sure to declare it as async
    */
@@ -32,13 +34,10 @@ const App = () => {
       const { ethereum } = window;
 
       if (!ethereum) {
-
         console.log("Make sure you have MetaMask!");
         setIsLoading(false);
         return;
-
       } else {
-
         console.log("We have the ethereum object", ethereum);
 
         /*
@@ -64,26 +63,12 @@ const App = () => {
     setIsLoading(false);
   };
 
-  const checkNetwork = async () => {
-    try {
-      //if wallet is connected
-      if (currentAccount) {
-        if (window.ethereum.networkVersion !== "4") {
-          alert("Please connect to Rinkeby!");
-        }
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   //Render Methods
   const renderContent = () => {
-    
     if (isLoading) {
       return <LoadingIndicator />;
     }
-    
+
     /**
      * Scenario 1
      */
@@ -105,6 +90,14 @@ const App = () => {
       /*
        * Scenario #2
        */
+    } else if (!networkStatus) {
+      return (
+        <div className="connect-wallet-container">
+          <p className="sub-text">
+            Connect to the Rinkeby Ethereum Test Network and reload this page!
+          </p>
+        </div>
+      );
     } else if (currentAccount && !characterNFT) {
       return <SelectCharacter setCharacterNFT={setCharacterNFT} />;
     } else if (currentAccount && characterNFT) {
@@ -157,8 +150,8 @@ const App = () => {
   useEffect(() => {
     setIsLoading(true);
     checkIfWalletIsConnected();
-    checkNetwork();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   //Contract interations UseEffect
@@ -188,11 +181,27 @@ const App = () => {
       setIsLoading(false);
     };
 
+    const checkNetwork = async () => {
+      try {
+        //if wallet is connected
+        if (currentAccount) {
+          if (window.ethereum.networkVersion !== "4") {
+            setNetworkStatus(false);
+          } else {
+            setNetworkStatus(true);
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
     /*
      * We only want to run this, if we have a connected wallet
      */
     if (currentAccount) {
       console.log("CurrentAccount:", currentAccount);
+      checkNetwork();
       fetchNFTMetadata();
     }
   }, [currentAccount]);
